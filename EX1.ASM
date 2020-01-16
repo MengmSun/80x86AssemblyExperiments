@@ -1,0 +1,148 @@
+DATA SEGMENT
+BUFFERIN  DB 80,?,80 DUP('$')
+BUFFEROUT DB 80,?,80 DUP('$')
+HANDLE    DW ?
+FILESIZE  DW ?
+FILENAME  DB 'C:\INPUT1.txt',0
+FILEOUT   DB 'C:\OUTPUT1.TXT',0
+SUCCESS1  DB 'SUCCESS TO CREATE FILE',0DH,0AH,'$'
+SUCCESS2  DB 'SUCCESS TO WRITE FILE',0DH,0AH,'$'
+SUCCESS3  DB 'SUCCESS TO READ FILE',0DH,0AH,'$'
+FAIL1     DB 'FAIL TO CREATE FILE',0DH,0AH,'$'
+FAIL2     DB 'FAIL TO WRITE FILE',0DH,0AH,'$'
+FAIL3     DB 'FAIL TO READ FILE',0DH,0AH,'$'
+DATA ENDS
+STACK SEGMENT STACK
+         DB 100 DUP(?)
+STACK ENDS
+CODE SEGMENT
+         ASSUME CS:CODE,SS:STACK,DS:DATA
+START:   
+         MOV AX,DATA
+         MOV DS,AX
+         MOV CX,0
+         LEA DX,FILENAME
+         MOV AH,3CH
+         INT 21H
+         JNC SUCCESSCREATE
+         LEA DX,FAIL1
+         JMP DISPLAYFILE
+SUCCESSCREATE: 
+         LEA DX,SUCCESS1
+        ;SAVE FILE NUMBER
+DISPLAYFILE:    
+         MOV AH,09H
+         INT 21H
+INPUTTEXT:
+         LEA DX,BUFFERIN   ;INPUT FROM KEYBOARDS
+         MOV AH,0AH
+         INT 21H
+         
+         LEA DX,FILENAME  ;OPEN THE FILE
+         MOV AL,01H
+         MOV AH,3DH
+         INT 21H
+         MOV HANDLE,AX
+  
+
+         MOV BX,HANDLE
+         MOV CL,BUFFERIN+1 ;SIZE OF BYTES OF BUFFERIN
+         MOV CH,00H
+         LEA DX,BUFFERIN+2 ;ADDRESS OF BUFFER DATA
+         MOV AH,40H        ;WRITE FILE
+         INT 21H
+         CMP AX,CX         ;COMPARE SIZE OF WRITEIN TO BUFFERIN
+         MOV FILESIZE,AX
+         JZ  SUCCESSWRITE  ;ZF=1,EQUAL
+         LEA DX,FAIL2
+         JMP DISPLAYWRITE
+SUCCESSWRITE:
+         LEA DX,SUCCESS2
+DISPLAYWRITE:
+         MOV AH,09H
+         INT 21H
+         MOV BX,HANDLE    ;CLOSE THE FILE
+         MOV AH,3EH
+         INT 21H
+         
+READFILE:
+         LEA DX,FILENAME  ;OPEN THE FILE
+         MOV AL,00H
+         MOV AH,3DH
+         INT 21H
+         MOV HANDLE,AX
+
+         MOV BX,HANDLE
+         MOV CL,BUFFERIN+1
+         MOV CH,00H
+         LEA DX,BUFFEROUT+2
+         MOV AH,3FH
+         INT 21H
+         MOV DL,BUFFEROUT+2
+         ;ADD DL,30H
+         MOV AH,02H
+         INT 21H
+         ;CMP AX,CX
+         JMP SUCCESSREAD
+         LEA DX,FAIL3
+         JMP DISPLAYREAD
+
+SUCCESSREAD:
+         LEA DX,SUCCESS3
+
+DISPLAYREAD:
+         MOV AH,09H
+         INT 21H 
+
+         MOV BX,HANDLE    ;CLOSE THE FILE
+         MOV AH,3EH
+         INT 21H
+
+         MOV CL,BUFFERIN+1
+         MOV CH,00H
+
+         XOR SI,SI         ;SI=0
+         
+DISPLAYTEXT:    
+          MOV DL,BUFFEROUT+2[SI]
+         
+          CMP DL,61H         ;JUDGE LOWERLETTER 
+          JB  PRINT       ;DL>5AH TURN LOWERLETTER TO UPPERLETTER 
+          XOR DL,20H
+          MOV BUFFEROUT+2[SI],DL      
+          
+          
+PRINT:    MOV AH,02H
+          INT 21H 
+          INC SI     
+          LOOP DISPLAYTEXT  ;LOOP CX=CX-1
+
+CREATEOUTPUTFILE:
+         MOV CX,0
+         LEA DX,FILEOUT
+         MOV AH,3CH
+         INT 21H
+         
+INPUTOUTPUTFILE:
+         LEA DX,FILEOUT   ;OPEN THE FILE
+         MOV AL,01H
+         MOV AH,3DH
+         INT 21H 
+         MOV HANDLE,AX 
+
+         MOV BX,HANDLE
+         MOV CL,BUFFERIN+1  ;SIZE OF BYTES OF BUFFEROUT
+         MOV CH,00H
+         LEA DX,BUFFEROUT+2 ;ADDRESS OF BUFFER DATA
+         MOV AH,40H       ;WRITE FILE
+         INT 21H
+
+         MOV BX,HANDLE    ;CLOSE THE FILE
+         MOV AH,3EH
+         INT 21H
+
+STOP:    MOV AH,4CH
+         INT 21H
+CODE ENDS
+     END START
+
