@@ -1,7 +1,7 @@
 # 80x86AssemblyExperiments
 80x86AssemblyExperiments, learn Intel Microprocessor,USTC
 
-实验环境为 MacOs+Dosbox,masm5.
+实验环境为 MacOs+Dosbox,masm5.直接将此整个文件夹全部下载，然后安装Dosbox即可编译链接运行其中文件。The experimental environment is MacOS + dosbox, masm5. Download the entire folder directly, and then install dosbox to compile or run the files.
 
 ### Ex1:Input&Output
 
